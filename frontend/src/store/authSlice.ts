@@ -9,7 +9,6 @@ export interface User {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
@@ -17,7 +16,6 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: null,
   isAuthenticated: false,
   loading: true,
   error: null,
@@ -27,18 +25,11 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ user: User; token: string }>
-    ) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+    setUser: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
       state.isAuthenticated = true;
       state.loading = false;
       state.error = null;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', action.payload.token);
-      }
     },
     setAuthLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -47,20 +38,16 @@ export const authSlice = createSlice({
       state.error = action.payload;
       state.loading = false;
     },
-    logout: (state) => {
+    clearAuth: (state) => {
       state.user = null;
-      state.token = null;
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
     },
   },
 });
 
-export const { setCredentials, setAuthLoading, setAuthError, logout } =
+export const { setUser, setAuthLoading, setAuthError, clearAuth } =
   authSlice.actions;
 
 export default authSlice.reducer;

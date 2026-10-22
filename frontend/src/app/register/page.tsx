@@ -4,12 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '@/store/authSlice';
+import { setUser } from '@/store/authSlice';
 import { apiRequest } from '@/lib/api';
 import type { User } from '@/store/authSlice';
 
-interface RegisterResponse {
-  token: string;
+interface AuthResponse {
   user: User;
 }
 
@@ -46,16 +45,16 @@ export default function RegisterPage() {
       setLoading(true);
       setError(null);
 
-      const data = await apiRequest<RegisterResponse>('/api/auth/register', {
+      const data = await apiRequest<AuthResponse>('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({
+        data: {
           username: username.trim(),
           email: email.trim() || undefined,
           password,
-        }),
+        },
       });
 
-      dispatch(setCredentials({ user: data.user, token: data.token }));
+      dispatch(setUser(data.user));
       router.push('/');
     } catch (err: unknown) {
       if (err instanceof Error) {

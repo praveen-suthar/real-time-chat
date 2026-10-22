@@ -4,12 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '@/store/authSlice';
+import { setUser } from '@/store/authSlice';
 import { apiRequest } from '@/lib/api';
 import type { User } from '@/store/authSlice';
 
-interface LoginResponse {
-  token: string;
+interface AuthResponse {
   user: User;
 }
 
@@ -33,12 +32,12 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
 
-      const data = await apiRequest<LoginResponse>('/api/auth/login', {
+      const data = await apiRequest<AuthResponse>('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username: username.trim(), password }),
+        data: { username: username.trim(), password },
       });
 
-      dispatch(setCredentials({ user: data.user, token: data.token }));
+      dispatch(setUser(data.user));
       router.push('/');
     } catch (err: unknown) {
       if (err instanceof Error) {

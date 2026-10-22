@@ -7,6 +7,14 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 const getJwtSecret = () =>
   process.env.JWT_SECRET || 'supersecret_jwt_key_at_least_32_characters_long';
 
+const COOKIE_NAME = 'token';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
+
 export async function register(req: Request, res: Response): Promise<void> {
   try {
     const { username, password, email } = req.body;
@@ -62,7 +70,8 @@ export async function register(req: Request, res: Response): Promise<void> {
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ token, user });
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    res.status(201).json({ user });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error during registration' });
@@ -101,8 +110,8 @@ export async function login(req: Request, res: Response): Promise<void> {
       { expiresIn: '7d' }
     );
 
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
     res.status(200).json({
-      token,
       user: {
         id: user.id,
         username: user.username,
@@ -115,6 +124,15 @@ export async function login(req: Request, res: Response): Promise<void> {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error during login' });
   }
+}
+
+export async function logout(_req: Request, res: Response): Promise<void> {
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 }
 
 export async function getMe(req: AuthenticatedRequest, res: Response): Promise<void> {

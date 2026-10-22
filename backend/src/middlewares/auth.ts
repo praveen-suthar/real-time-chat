@@ -16,15 +16,18 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Authentication token missing or invalid' });
-    return;
+  // Read token from httpOnly cookie first, then fallback to Authorization header
+  let token = req.cookies?.token;
+
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
   }
 
-  const token = authHeader.split(' ')[1];
   if (!token) {
-    res.status(401).json({ error: 'Token missing' });
+    res.status(401).json({ error: 'Authentication token missing or invalid' });
     return;
   }
 

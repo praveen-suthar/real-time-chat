@@ -4,7 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { logout } from '@/store/authSlice';
+import { clearAuth } from '@/store/authSlice';
+import { apiRequest } from '@/lib/api';
 import { LogOut, MessageSquare, User as UserIcon } from 'lucide-react';
 
 export default function HomePage() {
@@ -12,6 +13,16 @@ export default function HomePage() {
   const { user, isAuthenticated, loading } = useSelector(
     (state: RootState) => state.auth
   );
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      dispatch(clearAuth());
+    }
+  };
 
   if (loading) {
     return (
@@ -38,7 +49,7 @@ export default function HomePage() {
           </div>
           {isAuthenticated && (
             <button
-              onClick={() => dispatch(logout())}
+              onClick={handleLogout}
               className="flex items-center gap-1 rounded-md border border-zinc-200 px-2.5 py-1 text-xs text-zinc-600 hover:bg-zinc-50"
               title="Sign Out"
             >
@@ -77,7 +88,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span className="text-xs font-medium text-zinc-700">
-                  Authentication active
+                  Secure httpOnly session active
                 </span>
               </div>
               <span className="text-xs text-zinc-400">Ready for chat</span>
