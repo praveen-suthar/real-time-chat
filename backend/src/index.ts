@@ -3,6 +3,8 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 
 dotenv.config();
 
@@ -20,9 +22,13 @@ app.use(
 );
 app.use(express.json());
 
+// API Routes
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 export const io = new SocketIOServer(server, {
   cors: {
