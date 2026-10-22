@@ -5,12 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/store/authSlice';
-import { apiRequest } from '@/lib/api';
-import type { User } from '@/store/authSlice';
-
-interface AuthResponse {
-  user: User;
-}
+import { authApi } from '@/lib/apiClient';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -45,16 +40,13 @@ export default function RegisterPage() {
       setLoading(true);
       setError(null);
 
-      const data = await apiRequest<AuthResponse>('/api/auth/register', {
-        method: 'POST',
-        data: {
-          username: username.trim(),
-          email: email.trim() || undefined,
-          password,
-        },
+      const { user } = await authApi.register({
+        username: username.trim(),
+        email: email.trim() || undefined,
+        password,
       });
 
-      dispatch(setUser(data.user));
+      dispatch(setUser(user));
       router.push('/');
     } catch (err: unknown) {
       if (err instanceof Error) {

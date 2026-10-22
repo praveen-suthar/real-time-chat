@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { clearAuth } from '@/store/authSlice';
-import { apiRequest } from '@/lib/api';
+import { authApi } from '@/lib/apiClient';
 import { LogOut, MessageSquare, User as UserIcon } from 'lucide-react';
 
 export default function HomePage() {
@@ -16,7 +16,7 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     try {
-      await apiRequest('/api/auth/logout', { method: 'POST' });
+      await authApi.logout();
     } catch {
       // Ignore network errors on logout
     } finally {

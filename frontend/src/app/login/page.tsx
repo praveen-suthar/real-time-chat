@@ -5,12 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/store/authSlice';
-import { apiRequest } from '@/lib/api';
-import type { User } from '@/store/authSlice';
-
-interface AuthResponse {
-  user: User;
-}
+import { authApi } from '@/lib/apiClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,12 +27,12 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
 
-      const data = await apiRequest<AuthResponse>('/api/auth/login', {
-        method: 'POST',
-        data: { username: username.trim(), password },
+      const { user } = await authApi.login({
+        username: username.trim(),
+        password,
       });
 
-      dispatch(setUser(data.user));
+      dispatch(setUser(user));
       router.push('/');
     } catch (err: unknown) {
       if (err instanceof Error) {

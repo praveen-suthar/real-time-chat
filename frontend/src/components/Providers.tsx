@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { setUser, clearAuth } from '@/store/authSlice';
-import { apiRequest } from '@/lib/api';
-import type { User } from '@/store/authSlice';
+import { authApi } from '@/lib/apiClient';
 
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -13,7 +12,8 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true);
 
-    apiRequest<{ user: User }>('/api/auth/me')
+    authApi
+      .getMe()
       .then(({ user }) => {
         store.dispatch(setUser(user));
       })
