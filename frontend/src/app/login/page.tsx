@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/store/authSlice';
-import { authApi } from '@/lib/apiClient';
+import { authService } from '@/services/auth.service';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,7 +27,7 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
 
-      const { user } = await authApi.login({
+      const { user } = await authService.login({
         username: username.trim(),
         password,
       });
@@ -51,8 +51,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-md border border-zinc-200 bg-white p-6 shadow-sm">
+    <main className="flex min-h-screen items-center justify-center p-4 bg-zinc-50">
+      <div className="w-full max-w-sm rounded-md border border-zinc-200 bg-white p-6 shadow-xs">
         <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
           Sign In
         </h1>

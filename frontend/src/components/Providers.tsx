@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { Provider } from 'react-redux';
-import { store } from '@/store';
+import { store } from '@/store/store';
 import { setUser, clearAuth } from '@/store/authSlice';
-import { authApi } from '@/lib/apiClient';
+import { authService } from '@/services/auth.service';
 
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -12,7 +12,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true);
 
-    authApi
+    authService
       .getMe()
       .then(({ user }) => {
         store.dispatch(setUser(user));

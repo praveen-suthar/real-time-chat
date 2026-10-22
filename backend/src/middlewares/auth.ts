@@ -16,7 +16,6 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  // Read token from httpOnly cookie first, then fallback to Authorization header
   let token = req.cookies?.token;
 
   if (!token) {

@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Clean existing data
   await prisma.message.deleteMany();
   await prisma.participant.deleteMany();
   await prisma.conversation.deleteMany();
@@ -51,7 +50,6 @@ async function main() {
     },
   });
 
-  // Conversation between Praveen and Priya
   const convPraveenPriya = await prisma.conversation.create({
     data: {
       participants: {
@@ -77,7 +75,6 @@ async function main() {
     },
   });
 
-  // Conversation between Praveen and Rohit
   await prisma.conversation.create({
     data: {
       participants: {

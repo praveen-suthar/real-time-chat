@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
+import conversationRoutes from './routes/conversation.routes';
+import { setupSocketServer } from './sockets/chat.socket';
 
 dotenv.config();
 
@@ -24,13 +26,17 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-// API Routes
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/conversations', conversationRoutes);
+
+app.use((_req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
 
 export const io = new SocketIOServer(server, {
   cors: {
@@ -39,13 +45,7 @@ export const io = new SocketIOServer(server, {
   },
 });
 
-io.on('connection', (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  socket.on('disconnect', () => {
-    console.log(`Socket disconnected: ${socket.id}`);
-  });
-});
+setupSocketServer(io);
 
 server.listen(port, () => {
   console.log(`Backend server running on http://localhost:${port}`);
