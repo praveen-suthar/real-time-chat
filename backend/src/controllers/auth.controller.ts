@@ -7,11 +7,13 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 const getJwtSecret = () =>
   process.env.JWT_SECRET || 'supersecret_jwt_key_at_least_32_characters_long';
 
+const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+
 const COOKIE_NAME = 'token';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: isProduction,
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -129,8 +131,8 @@ export async function login(req: Request, res: Response): Promise<void> {
 export async function logout(_req: Request, res: Response): Promise<void> {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
   });
   res.status(200).json({ message: 'Logged out successfully' });
 }

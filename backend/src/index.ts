@@ -17,12 +17,13 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+const clientUrl = (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/$/, '');
+const allowedOrigins = [clientUrl, 'https://realchatnow.vercel.app', 'http://localhost:3000'];
 const port = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: clientUrl,
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -46,7 +47,7 @@ app.use((_req, res) => {
 
 export const io = new SocketIOServer(server, {
   cors: {
-    origin: clientUrl,
+    origin: allowedOrigins,
     credentials: true,
   },
 });
