@@ -68,6 +68,13 @@ const upload = multer({
   },
 });
 
-router.post('/', authMiddleware, upload.single('file'), uploadMedia);
+router.post(
+  '/',
+  authMiddleware,
+  (req, res, next) => {
+    (upload.single('file') as any)(req, res, next);
+  },
+  uploadMedia
+);
 
 export default router;
