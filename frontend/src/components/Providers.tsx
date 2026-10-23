@@ -5,6 +5,7 @@ import { Provider, useDispatch } from 'react-redux';
 import { store } from '@/store/store';
 import { setUser, clearAuth } from '@/store/authSlice';
 import { authService } from '@/services/auth.service';
+import { clearAuthCookie } from '@/lib/authCookie';
 
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
@@ -13,9 +14,6 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    // Safety timeout in case backend is slow to respond (e.g., serverless cold start)
     const timer = setTimeout(() => {
       dispatch(clearAuth());
     }, 6000);
@@ -28,9 +26,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         clearTimeout(timer);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-        }
+        clearAuthCookie();
         dispatch(clearAuth());
       });
 
