@@ -14,20 +14,16 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     setMounted(true);
 
     const timer = setTimeout(() => {
-      console.warn('[AuthInitializer] 3s timeout reached -> calling clearAuth');
       dispatch(clearAuth());
     }, 3000);
 
-    console.log('[AuthInitializer] Calling authService.getMe()...');
     authService
       .getMe()
       .then(({ user }) => {
-        console.log('[AuthInitializer] getMe success:', user?.username);
         clearTimeout(timer);
         dispatch(setUser(user));
       })
-      .catch((err) => {
-        console.warn('[AuthInitializer] getMe failed:', err?.message);
+      .catch(() => {
         clearTimeout(timer);
         dispatch(clearAuth());
       });

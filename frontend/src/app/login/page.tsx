@@ -9,17 +9,14 @@ import { setUser } from '@/store/authSlice';
 import { authService } from '@/services/auth.service';
 
 export default function LoginPage() {
-  const router = useRouter();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  console.log('[LoginPage render] isAuthenticated:', isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.refresh();
-      router.replace('/');
+      window.location.replace('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated]);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -42,8 +39,8 @@ export default function LoginPage() {
         password,
       });
 
-      console.log('[LoginPage] Login success, dispatching setUser:', user.username);
       dispatch(setUser(user));
+      window.location.replace('/');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
