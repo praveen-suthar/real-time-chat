@@ -1,15 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 import { setUser } from '@/store/authSlice';
 import { authService } from '@/services/auth.service';
 
 export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, router]);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -47,7 +55,7 @@ export default function RegisterPage() {
       });
 
       dispatch(setUser(user));
-      router.push('/');
+      router.replace('/');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -58,6 +66,14 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  if (isAuthenticated) {
+    return (
+      <main className="flex h-full w-full items-center justify-center p-6 bg-zinc-50">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+      </main>
+    );
+  }
 
   return (
     <main className="flex h-full w-full overflow-y-auto items-center justify-center p-4 bg-zinc-50">
