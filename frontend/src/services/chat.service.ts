@@ -27,4 +27,12 @@ export const chatService = {
     );
     return res.data;
   },
+
+  markAsRead: async (conversationId: string): Promise<{ success: boolean }> => {
+    const res = await apiClient.patch<{ success: boolean }>(
+      `/api/conversations/${conversationId}/read`
+    );
+    return res.data;
+  },
 };
+

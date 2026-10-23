@@ -30,6 +30,53 @@ export function getOnlineUserIds(): string[] {
   return Array.from(activeUserSockets.keys());
 }
 
+export async function markAndNotifyMessagesRead(
+  io: SocketIOServer,
+  conversationId: string,
+  readerId: string
+): Promise<number> {
+  try {
+    const readAt = new Date();
+    const result = await prisma.message.updateMany({
+      where: {
+        conversationId,
+        senderId: { not: readerId },
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+        readAt,
+      },
+    });
+
+    if (result.count > 0) {
+      const payload = {
+        conversationId,
+        readerId,
+        readAt: readAt.toISOString(),
+      };
+
+      io.to(`conversation:${conversationId}`).emit('messages_read', payload);
+
+      const allParticipants = await prisma.participant.findMany({
+        where: { conversationId },
+        select: { userId: true },
+      });
+
+      allParticipants.forEach((p) => {
+        if (p.userId !== readerId) {
+          io.to(`user:${p.userId}`).emit('messages_read', payload);
+        }
+      });
+    }
+
+    return result.count;
+  } catch (err) {
+    logger.error('Failed to mark and notify messages read:', err);
+    return 0;
+  }
+}
+
 export function setupSocketServer(io: SocketIOServer) {
   // Authentication middleware for socket connections
   io.use((socket, next) => {
@@ -101,8 +148,32 @@ export function setupSocketServer(io: SocketIOServer) {
 
         socket.join(`conversation:${conversationId}`);
         socket.emit('conversation_joined', { conversationId });
+
+        // Auto-mark any unread messages from other user as read when joining
+        await markAndNotifyMessagesRead(io, conversationId, user.id);
       } catch (err) {
         socket.emit('socket_error', { message: 'Failed to join conversation room' });
+      }
+    });
+
+    socket.on('mark_messages_read', async ({ conversationId }: { conversationId: string }) => {
+      try {
+        if (!conversationId) return;
+
+        const participant = await prisma.participant.findUnique({
+          where: {
+            conversationId_userId: {
+              conversationId,
+              userId: user.id,
+            },
+          },
+        });
+
+        if (!participant) return;
+
+        await markAndNotifyMessagesRead(io, conversationId, user.id);
+      } catch (err) {
+        logger.error('mark_messages_read socket error:', err);
       }
     });
 

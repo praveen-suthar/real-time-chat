@@ -22,6 +22,8 @@ import {
   Search,
   User as UserIcon,
   CheckCircle2,
+  Check,
+  CheckCheck,
   X,
 } from 'lucide-react';
 
@@ -322,14 +324,49 @@ export function Sidebar() {
                         <span className="text-zinc-600">{draftDisplay}</span>
                       </p>
                     ) : (
-                      <p className="truncate text-[11px] text-zinc-500 mt-0.5">
-                        {conv.lastMessage?.content ||
-                          (conv.lastMessage?.mediaUrl
-                            ? conv.lastMessage.mediaType === 'video'
-                              ? '🎥 Video'
-                              : '📷 Photo'
-                            : 'No messages yet')}
-                      </p>
+                      <div className="flex items-center justify-between gap-1 mt-0.5">
+                        <div className="flex items-center gap-1 min-w-0 text-[11px] text-zinc-500">
+                          {conv.lastMessage && conv.lastMessage.senderId === user?.id && (
+                            <span
+                              className="shrink-0 inline-flex items-center"
+                              title={conv.lastMessage.isRead ? 'Read' : 'Sent'}
+                              aria-label={conv.lastMessage.isRead ? 'Read' : 'Sent'}
+                            >
+                              {conv.lastMessage.isRead ? (
+                                <CheckCheck className="h-3.5 w-3.5 text-sky-500 stroke-[2.5]" />
+                              ) : (
+                                <Check className="h-3 w-3 text-zinc-400" />
+                              )}
+                            </span>
+                          )}
+                          <span
+                            className={`truncate ${
+                              conv.lastMessage &&
+                              conv.lastMessage.senderId !== user?.id &&
+                              !conv.lastMessage.isRead &&
+                              !isSelected
+                                ? 'font-semibold text-zinc-900'
+                                : ''
+                            }`}
+                          >
+                            {conv.lastMessage?.content ||
+                              (conv.lastMessage?.mediaUrl
+                                ? conv.lastMessage.mediaType === 'video'
+                                  ? '🎥 Video'
+                                  : '📷 Photo'
+                                : 'No messages yet')}
+                          </span>
+                        </div>
+                        {conv.lastMessage &&
+                          conv.lastMessage.senderId !== user?.id &&
+                          !conv.lastMessage.isRead &&
+                          !isSelected && (
+                            <span
+                              className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 ml-1"
+                              title="Unread message"
+                            />
+                          )}
+                      </div>
                     )}
                   </div>
                 </button>

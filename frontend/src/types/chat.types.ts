@@ -15,9 +15,17 @@ export interface MessageItem {
   mediaUrl?: string | null;
   mediaType?: string | null;
   forwardedFromId?: string | null;
+  isRead?: boolean;
+  readAt?: string | null;
   createdAt: string;
   sender: MessageSender;
   status?: 'sending' | 'sent' | 'error';
+}
+
+export interface MessagesReadPayload {
+  conversationId: string;
+  readerId?: string;
+  readAt?: string;
 }
 
 export interface ConversationItem {

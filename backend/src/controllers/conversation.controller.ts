@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticatedRequest } from '../middlewares/auth';
+import { markAndNotifyMessagesRead } from '../sockets/chat.socket';
 
 export async function getConversations(
   req: AuthenticatedRequest,
@@ -215,6 +216,11 @@ export async function getConversationMessages(
       return;
     }
 
+    const io = req.app.get('io');
+    if (io) {
+      await markAndNotifyMessagesRead(io, conversationId, userId);
+    }
+
     const messages = await prisma.message.findMany({
       where: { conversationId },
       include: {
@@ -240,3 +246,60 @@ export async function getConversationMessages(
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 }
+
+export async function markConversationAsRead(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    const { id: conversationId } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!conversationId) {
+      res.status(400).json({ error: 'Conversation ID required' });
+      return;
+    }
+
+    const isParticipant = await prisma.participant.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId,
+        },
+      },
+    });
+
+    if (!isParticipant) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      await markAndNotifyMessagesRead(io, conversationId, userId);
+    } else {
+      await prisma.message.updateMany({
+        where: {
+          conversationId,
+          senderId: { not: userId },
+          isRead: false,
+        },
+        data: {
+          isRead: true,
+          readAt: new Date(),
+        },
+      });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('markConversationAsRead error:', error);
+    res.status(500).json({ error: 'Failed to mark conversation as read' });
+  }
+}
+

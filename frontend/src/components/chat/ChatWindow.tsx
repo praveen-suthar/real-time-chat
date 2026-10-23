@@ -7,6 +7,7 @@ import {
   setMessages,
   setLoadingMessages,
   addMessage,
+  markMessagesAsRead,
   setActiveConversationId,
   selectActiveConversation,
   selectActiveMessages,
@@ -137,6 +138,53 @@ export function ChatWindow() {
       socket.off('connect', handleReconnect);
     };
   }, [activeConversationId, loadMessagesForConversation]);
+
+  // Mark unread messages as read when viewing conversation
+  useEffect(() => {
+    if (!activeConversationId || !user) return;
+
+    const unreadFromOther = currentMessages.some(
+      (m) => m.senderId !== user.id && !m.isRead
+    );
+
+    if (unreadFromOther) {
+      const socket = getSocket();
+      socket.emit('mark_messages_read', { conversationId: activeConversationId });
+      dispatch(
+        markMessagesAsRead({
+          conversationId: activeConversationId,
+          readerId: user.id,
+        })
+      );
+    }
+  }, [activeConversationId, currentMessages, user, dispatch]);
+
+  // Also handle window visibility and focus
+  useEffect(() => {
+    if (!activeConversationId || !user) return;
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        const socket = getSocket();
+        socket.emit('mark_messages_read', { conversationId: activeConversationId });
+        dispatch(
+          markMessagesAsRead({
+            conversationId: activeConversationId,
+            readerId: user.id,
+          })
+        );
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
+  }, [activeConversationId, user, dispatch]);
+
 
   useLayoutEffect(() => {
     scrollToBottom(true);

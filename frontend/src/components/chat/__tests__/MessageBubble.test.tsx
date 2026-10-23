@@ -84,4 +84,45 @@ describe('MessageBubble Component', () => {
     expect(video).toHaveAttribute('src', '/api/media/msg-video-1');
     expect(video).toHaveAttribute('controls');
   });
+
+  it('renders single tick when message is sent but not yet viewed', () => {
+    const sentMsg: MessageItem = {
+      ...baseMessage,
+      isRead: false,
+      status: 'sent',
+    };
+
+    render(<MessageBubble message={sentMsg} isSelf={true} />);
+
+    expect(screen.getByTitle('Sent')).toBeInTheDocument();
+    expect(screen.queryByTitle('Viewed by receiver')).not.toBeInTheDocument();
+  });
+
+  it('renders WhatsApp double tick (CheckCheck) when message is viewed by receiver', () => {
+    const readMsg: MessageItem = {
+      ...baseMessage,
+      isRead: true,
+      readAt: '2026-10-22T12:35:00.000Z',
+      status: 'sent',
+    };
+
+    render(<MessageBubble message={readMsg} isSelf={true} />);
+
+    const viewedElement = screen.getByTitle('Viewed by receiver');
+    expect(viewedElement).toBeInTheDocument();
+    expect(viewedElement).toHaveClass('text-sky-400');
+  });
+
+  it('renders clock icon when message is in sending status', () => {
+    const sendingMsg: MessageItem = {
+      ...baseMessage,
+      status: 'sending',
+    };
+
+    const { container } = render(<MessageBubble message={sendingMsg} isSelf={true} />);
+
+    const clockIcon = container.querySelector('.animate-pulse');
+    expect(clockIcon).toBeInTheDocument();
+  });
 });
+

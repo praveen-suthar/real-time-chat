@@ -62,7 +62,12 @@ export const chatSlice = createSlice({
           (m) => m.clientId === msg.clientId
         );
         if (existingIdx >= 0) {
-          state.messages[convId]![existingIdx] = msg;
+          const prev = state.messages[convId]![existingIdx];
+          state.messages[convId]![existingIdx] = {
+            ...msg,
+            isRead: msg.isRead ?? prev?.isRead ?? false,
+            readAt: msg.readAt ?? prev?.readAt,
+          };
           return;
         }
       }
@@ -71,7 +76,12 @@ export const chatSlice = createSlice({
         (m) => m.id === msg.id
       );
       if (duplicateIdx >= 0) {
-        state.messages[convId]![duplicateIdx] = msg;
+        const prev = state.messages[convId]![duplicateIdx];
+        state.messages[convId]![duplicateIdx] = {
+          ...msg,
+          isRead: msg.isRead ?? prev?.isRead ?? false,
+          readAt: msg.readAt ?? prev?.readAt,
+        };
       } else {
         state.messages[convId]!.push(msg);
       }
@@ -85,6 +95,30 @@ export const chatSlice = createSlice({
         );
       }
     },
+    markMessagesAsRead: (
+      state,
+      action: PayloadAction<{ conversationId: string; readAt?: string; readerId?: string }>
+    ) => {
+      const { conversationId, readAt, readerId } = action.payload;
+      const convMsgs = state.messages[conversationId];
+      if (convMsgs) {
+        convMsgs.forEach((msg) => {
+          if (!readerId || msg.senderId !== readerId) {
+            msg.isRead = true;
+            if (readAt) msg.readAt = readAt;
+          }
+        });
+      }
+
+      const conv = state.conversations.find((c) => c.id === conversationId);
+      if (conv?.lastMessage) {
+        if (!readerId || conv.lastMessage.senderId !== readerId) {
+          conv.lastMessage.isRead = true;
+          if (readAt) conv.lastMessage.readAt = readAt;
+        }
+      }
+    },
+
     setOnlineUsers: (state, action: PayloadAction<string[]>) => {
       state.onlineUsers = action.payload;
     },
@@ -143,6 +177,7 @@ export const {
   setActiveConversationId,
   setMessages,
   addMessage,
+  markMessagesAsRead,
   setOnlineUsers,
   setUserStatus,
   setUserTyping,

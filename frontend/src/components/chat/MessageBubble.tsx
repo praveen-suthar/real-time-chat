@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import type { MessageItem } from '@/types/chat.types';
-import { CornerDownRight, Check, Clock, Forward } from 'lucide-react';
+import { CornerDownRight, Check, CheckCheck, Clock, Forward } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: MessageItem;
@@ -127,9 +127,15 @@ export function MessageBubble({ message, isSelf, onForward, onMediaLoad }: Messa
           {isSelf && (
             <>
               {message.status === 'sending' ? (
-                <Clock className="h-2.5 w-2.5 animate-pulse" />
+                <Clock className="h-2.5 w-2.5 animate-pulse text-zinc-400" />
+              ) : message.isRead ? (
+                <span title="Viewed by receiver" aria-label="Viewed" className="inline-flex items-center text-sky-400">
+                  <CheckCheck className="h-3 w-3 stroke-[2.5]" />
+                </span>
               ) : (
-                <Check className="h-2.5 w-2.5" />
+                <span title="Sent" aria-label="Sent" className="inline-flex items-center text-zinc-400">
+                  <Check className="h-2.5 w-2.5" />
+                </span>
               )}
             </>
           )}

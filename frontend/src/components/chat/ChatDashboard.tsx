@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import {
   setConversations,
   addMessage,
+  markMessagesAsRead,
   setOnlineUsers,
   setUserStatus,
   setUserTyping,
@@ -68,12 +69,28 @@ export function ChatDashboard() {
       dispatch(addMessage(message));
     });
 
+    socket.on(
+      'messages_read',
+      ({
+        conversationId,
+        readerId,
+        readAt,
+      }: {
+        conversationId: string;
+        readerId?: string;
+        readAt?: string;
+      }) => {
+        dispatch(markMessagesAsRead({ conversationId, readerId, readAt }));
+      }
+    );
+
     return () => {
       socket.off('online_users');
       socket.off('user_status');
       socket.off('user_typing');
       socket.off('user_stop_typing');
       socket.off('new_message');
+      socket.off('messages_read');
       disconnectSocket();
     };
   }, [dispatch]);

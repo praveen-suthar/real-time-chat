@@ -3,6 +3,7 @@ import chatReducer, {
   setConversations,
   setActiveConversationId,
   addMessage,
+  markMessagesAsRead,
   setUserTyping,
   removeUserTyping,
   selectActiveConversation,
@@ -87,6 +88,40 @@ describe('chatSlice reducers & memoized selectors', () => {
     expect(state.messages['conv-1']![0]!.id).toBe('server-db-id-456');
     expect(state.messages['conv-1']![0]!.status).toBe('sent');
   });
+
+  it('marks unread messages as read when markMessagesAsRead is dispatched', () => {
+    let state = chatReducer(undefined, setConversations([initialConv]));
+
+    const sentMsg: MessageItem = {
+      id: 'msg-read-test-1',
+      conversationId: 'conv-1',
+      senderId: 'user-1',
+      content: 'Have you seen this?',
+      createdAt: '2026-10-22T10:15:00.000Z',
+      sender: { id: 'user-1', username: 'praveen' },
+      isRead: false,
+      status: 'sent',
+    };
+
+    state = chatReducer(state, addMessage(sentMsg));
+    expect(state.messages['conv-1']![0]!.isRead).toBe(false);
+    expect(state.conversations[0]!.lastMessage?.isRead).toBe(false);
+
+    // Receiver views the message
+    state = chatReducer(
+      state,
+      markMessagesAsRead({
+        conversationId: 'conv-1',
+        readerId: 'user-2',
+        readAt: '2026-10-22T10:16:00.000Z',
+      })
+    );
+
+    expect(state.messages['conv-1']![0]!.isRead).toBe(true);
+    expect(state.messages['conv-1']![0]!.readAt).toBe('2026-10-22T10:16:00.000Z');
+    expect(state.conversations[0]!.lastMessage?.isRead).toBe(true);
+  });
+
 
   it('correctly tracks typing users per conversation', () => {
     let state = chatReducer(undefined, { type: 'init' });

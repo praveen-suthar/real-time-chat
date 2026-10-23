@@ -20,3 +20,13 @@ export interface TypingPayload {
 export interface JoinLeavePayload {
   conversationId: string;
 }
+
+export interface MarkMessagesReadPayload {
+  conversationId: string;
+}
+
+export interface MessagesReadEvent {
+  conversationId: string;
+  readerId: string;
+  readAt: string;
+}

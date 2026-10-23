@@ -52,6 +52,8 @@ export const io = new SocketIOServer(server, {
   },
 });
 
+app.set('io', io);
+
 setupSocketServer(io);
 
 server.listen(port, () => {
