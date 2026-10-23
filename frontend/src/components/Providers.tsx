@@ -1,26 +1,35 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { store } from '@/store/store';
 import { setUser, clearAuth } from '@/store/authSlice';
 import { authService } from '@/services/auth.service';
 
 function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const dispatch = useDispatch();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
 
+    const timer = setTimeout(() => {
+      dispatch(clearAuth());
+    }, 3000);
+
     authService
       .getMe()
       .then(({ user }) => {
-        store.dispatch(setUser(user));
+        clearTimeout(timer);
+        dispatch(setUser(user));
       })
       .catch(() => {
-        store.dispatch(clearAuth());
+        clearTimeout(timer);
+        dispatch(clearAuth());
       });
-  }, []);
+
+    return () => clearTimeout(timer);
+  }, [dispatch]);
 
   if (!mounted) {
     return null;

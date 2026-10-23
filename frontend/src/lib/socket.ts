@@ -6,12 +6,14 @@ let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socket) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     socket = io(SOCKET_URL, {
       withCredentials: true,
       autoConnect: false,
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      auth: token ? { token } : undefined,
     });
   }
   return socket;

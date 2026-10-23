@@ -73,7 +73,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     );
 
     res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-    res.status(201).json({ user });
+    res.status(201).json({ user, token });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error during registration' });
@@ -114,6 +114,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
     res.status(200).json({
+      token,
       user: {
         id: user.id,
         username: user.username,
