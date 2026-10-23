@@ -58,3 +58,4 @@ server.listen(port, () => {
 });
 
 export { app, server };
+export default app;
