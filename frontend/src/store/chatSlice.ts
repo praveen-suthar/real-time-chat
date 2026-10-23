@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { ConversationItem, MessageItem } from '@/types/chat.types';
 
 interface ChatState {
@@ -67,7 +67,6 @@ export const chatSlice = createSlice({
         }
       }
 
-      // Check duplicate by id
       const duplicateIdx = state.messages[convId]!.findIndex(
         (m) => m.id === msg.id
       );
@@ -77,12 +76,10 @@ export const chatSlice = createSlice({
         state.messages[convId]!.push(msg);
       }
 
-      // Update conversation's lastMessage and updatedAt
       const conv = state.conversations.find((c) => c.id === convId);
       if (conv) {
         conv.lastMessage = msg;
         conv.updatedAt = msg.createdAt;
-        // Re-sort conversations by latest activity
         state.conversations.sort(
           (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         );
@@ -153,5 +150,50 @@ export const {
   setLoadingConversations,
   setLoadingMessages,
 } = chatSlice.actions;
+
+export const selectChatState = (state: { chat: ChatState }) => state.chat;
+
+export const selectConversations = createSelector(
+  [selectChatState],
+  (chat) => chat.conversations
+);
+
+export const selectActiveConversationId = createSelector(
+  [selectChatState],
+  (chat) => chat.activeConversationId
+);
+
+export const selectMessagesMap = createSelector(
+  [selectChatState],
+  (chat) => chat.messages
+);
+
+export const selectOnlineUsers = createSelector(
+  [selectChatState],
+  (chat) => chat.onlineUsers
+);
+
+export const selectTypingUsers = createSelector(
+  [selectChatState],
+  (chat) => chat.typingUsers
+);
+
+export const selectActiveConversation = createSelector(
+  [selectConversations, selectActiveConversationId],
+  (conversations, activeId) =>
+    activeId ? conversations.find((c) => c.id === activeId) || null : null
+);
+
+export const selectActiveMessages = createSelector(
+  [selectMessagesMap, selectActiveConversationId],
+  (messagesMap, activeId) =>
+    activeId && messagesMap[activeId] ? messagesMap[activeId] : []
+);
+
+export const selectActiveTypingUsers = createSelector(
+  [selectTypingUsers, selectActiveConversationId],
+  (typingMap, activeId) =>
+    activeId && typingMap[activeId] ? typingMap[activeId] : []
+);
 
 export default chatSlice.reducer;

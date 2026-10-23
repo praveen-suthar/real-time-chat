@@ -7,7 +7,10 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import conversationRoutes from './routes/conversation.routes';
+import uploadRoutes from './routes/upload.routes';
+import mediaRoutes from './routes/media.routes';
 import { setupSocketServer } from './sockets/chat.socket';
+import { logger } from './lib/logger';
 
 dotenv.config();
 
@@ -23,6 +26,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(logger.middleware);
 app.use(cookieParser());
 app.use(express.json());
 
@@ -33,9 +37,11 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/media', mediaRoutes);
 
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({ error: 'Not found' });
 });
 
 export const io = new SocketIOServer(server, {
@@ -48,7 +54,7 @@ export const io = new SocketIOServer(server, {
 setupSocketServer(io);
 
 server.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);
+  logger.success(`Server running at http://localhost:${port}`);
 });
 
 export { app, server };

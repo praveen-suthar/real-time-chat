@@ -58,34 +58,44 @@ export function NewChatModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-sm rounded-md border border-zinc-200 bg-white shadow-md">
-        <div className="flex items-center justify-between border-b border-zinc-100 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-xs">
+      <div className="w-full max-w-sm max-h-[85dvh] flex flex-col rounded-lg border border-zinc-200 bg-white shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3 shrink-0">
           <h2 className="text-sm font-semibold text-zinc-900">
             Start New Conversation
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+            className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 focus:outline-none"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-3 border-b border-zinc-100">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+        <div className="p-3 border-b border-zinc-100 shrink-0">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search users..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-zinc-200 bg-zinc-50 pl-8 pr-3 py-1.5 text-xs text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none"
+              className="w-full rounded-md border border-zinc-200 bg-zinc-50 pl-8 pr-8 py-2 sm:py-1.5 text-sm sm:text-xs text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none transition-colors"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="max-h-64 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2">
           {loading ? (
             <p className="p-4 text-center text-xs text-zinc-400">Loading users...</p>
           ) : error ? (

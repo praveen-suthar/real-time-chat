@@ -2,6 +2,9 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { AuthUser } from '../middlewares/auth';
+import { logger } from '../lib/logger';
+
+import { SendMessagePayload, SendMessageAck } from '../types/socket.types';
 
 export interface AuthenticatedSocket extends Socket {
   data: {
@@ -21,7 +24,6 @@ function parseCookies(cookieHeader: string): Record<string, string> {
   return list;
 }
 
-// active user tracking: userId -> Set of socketIds
 const activeUserSockets = new Map<string, Set<string>>();
 
 export function getOnlineUserIds(): string[] {
@@ -73,7 +75,8 @@ export function setupSocketServer(io: SocketIOServer) {
     }
     activeUserSockets.get(user.id)!.add(socket.id);
 
-    // Broadcast online status to all connected clients
+    logger.ws('connected', `user: ${user.username} (${socket.id})`);
+
     io.emit('online_users', getOnlineUserIds());
     io.emit('user_status', { userId: user.id, isOnline: true });
 
@@ -92,9 +95,7 @@ export function setupSocketServer(io: SocketIOServer) {
         });
 
         if (!participant) {
-          socket.emit('socket_error', {
-            message: 'You are not a participant in this conversation',
-          });
+          socket.emit('socket_error', { message: 'Forbidden' });
           return;
         }
 
@@ -105,13 +106,11 @@ export function setupSocketServer(io: SocketIOServer) {
       }
     });
 
-    // Leave conversation room
     socket.on('leave_conversation', ({ conversationId }: { conversationId: string }) => {
       if (!conversationId) return;
       socket.leave(`conversation:${conversationId}`);
     });
 
-    // Typing start indicator
     socket.on('typing_start', ({ conversationId }: { conversationId: string }) => {
       if (!conversationId) return;
       socket.to(`conversation:${conversationId}`).emit('user_typing', {
@@ -121,7 +120,6 @@ export function setupSocketServer(io: SocketIOServer) {
       });
     });
 
-    // Typing stop indicator
     socket.on('typing_stop', ({ conversationId }: { conversationId: string }) => {
       if (!conversationId) return;
       socket.to(`conversation:${conversationId}`).emit('user_stop_typing', {
@@ -130,23 +128,11 @@ export function setupSocketServer(io: SocketIOServer) {
       });
     });
 
-    // Real-time message sending with deduplication and acknowledgment
     socket.on(
       'send_message',
       async (
-        payload: {
-          conversationId: string;
-          content: string;
-          clientId?: string;
-          mediaUrl?: string;
-          mediaType?: string;
-          forwardedFromId?: string;
-        },
-        callback?: (response: {
-          success: boolean;
-          message?: unknown;
-          error?: string;
-        }) => void
+        payload: SendMessagePayload,
+        callback?: (response: SendMessageAck) => void
       ) => {
         try {
           const {
@@ -171,7 +157,14 @@ export function setupSocketServer(io: SocketIOServer) {
             return;
           }
 
-          // 1. Security: Verify sender belongs to the conversation
+          if (content && content.length > 5000) {
+            callback?.({
+              success: false,
+              error: 'Message exceeds maximum length of 5000 characters',
+            });
+            return;
+          }
+
           const participant = await prisma.participant.findUnique({
             where: {
               conversationId_userId: {
@@ -184,12 +177,12 @@ export function setupSocketServer(io: SocketIOServer) {
           if (!participant) {
             callback?.({
               success: false,
-              error: 'Forbidden: You are not a participant in this conversation',
+              error: 'Forbidden',
             });
             return;
           }
 
-          // 2. Deduplication check: if message with (conversationId, senderId, clientId) exists
+          // Return existing message if client already received an ack
           if (clientId) {
             const existing = await prisma.message.findUnique({
               where: {
@@ -212,7 +205,23 @@ export function setupSocketServer(io: SocketIOServer) {
             }
           }
 
-          // 3. Save message and update conversation timestamp
+          let finalMediaUrl = mediaUrl || null;
+          let finalMediaType = mediaType || null;
+
+          if (forwardedFromId || (mediaUrl && mediaUrl.startsWith('/api/media/'))) {
+            const sourceId = forwardedFromId || mediaUrl?.replace('/api/media/', '');
+            if (sourceId) {
+              const originalMsg = await prisma.message.findUnique({
+                where: { id: sourceId },
+                select: { mediaUrl: true, mediaType: true },
+              });
+              if (originalMsg?.mediaUrl) {
+                finalMediaUrl = originalMsg.mediaUrl;
+                finalMediaType = originalMsg.mediaType || finalMediaType;
+              }
+            }
+          }
+
           const [savedMessage] = await prisma.$transaction([
             prisma.message.create({
               data: {
@@ -220,8 +229,8 @@ export function setupSocketServer(io: SocketIOServer) {
                 senderId: user.id,
                 clientId: clientId || null,
                 content: content?.trim() || '',
-                mediaUrl: mediaUrl || null,
-                mediaType: mediaType || null,
+                mediaUrl: finalMediaUrl,
+                mediaType: finalMediaType,
                 forwardedFromId: forwardedFromId || null,
               },
               include: {
@@ -236,10 +245,13 @@ export function setupSocketServer(io: SocketIOServer) {
             }),
           ]);
 
-          // 4. Broadcast to active conversation room
-          socket.to(`conversation:${conversationId}`).emit('new_message', savedMessage);
+          const outgoingMessage = {
+            ...savedMessage,
+            mediaUrl: savedMessage.mediaUrl ? `/api/media/${savedMessage.id}` : null,
+          };
 
-          // 5. Broadcast to participants' personal rooms for sidebar update
+          socket.to(`conversation:${conversationId}`).emit('new_message', outgoingMessage);
+
           const allParticipants = await prisma.participant.findMany({
             where: { conversationId },
             select: { userId: true },
@@ -247,14 +259,13 @@ export function setupSocketServer(io: SocketIOServer) {
 
           allParticipants.forEach((p) => {
             if (p.userId !== user.id) {
-              io.to(`user:${p.userId}`).emit('new_message', savedMessage);
+              io.to(`user:${p.userId}`).emit('new_message', outgoingMessage);
             }
           });
 
-          // 6. Acknowledge sender
-          callback?.({ success: true, message: savedMessage });
+          callback?.({ success: true, message: outgoingMessage });
         } catch (err) {
-          console.error('send_message error:', err);
+          logger.error('send_message socket error:', err);
           callback?.({ success: false, error: 'Failed to send message' });
         }
       }
@@ -266,6 +277,7 @@ export function setupSocketServer(io: SocketIOServer) {
         userSockets.delete(socket.id);
         if (userSockets.size === 0) {
           activeUserSockets.delete(user.id);
+          logger.ws('disconnected', `user: ${user.username}`);
           io.emit('user_status', { userId: user.id, isOnline: false });
           io.emit('online_users', getOnlineUserIds());
         }

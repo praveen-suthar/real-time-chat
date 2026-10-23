@@ -45,13 +45,19 @@ export async function getConversations(
         (p) => p.userId !== userId
       )?.user;
 
+      const lastMsg = conv.messages[0];
       return {
         id: conv.id,
         createdAt: conv.createdAt,
         updatedAt: conv.updatedAt,
         otherUser: otherParticipant || null,
         participants: conv.participants.map((p) => p.user),
-        lastMessage: conv.messages[0] || null,
+        lastMessage: lastMsg
+          ? {
+              ...lastMsg,
+              mediaUrl: lastMsg.mediaUrl ? `/api/media/${lastMsg.id}` : null,
+            }
+          : null,
       };
     });
 
@@ -119,13 +125,19 @@ export async function createOrGetConversation(
           updatedAt: existing.updatedAt,
           otherUser,
           participants: existing.participants.map((p) => p.user),
-          lastMessage: existing.messages[0] || null,
+          lastMessage: existing.messages[0]
+            ? {
+                ...existing.messages[0],
+                mediaUrl: existing.messages[0].mediaUrl
+                  ? `/api/media/${existing.messages[0].id}`
+                  : null,
+              }
+            : null,
         },
       });
       return;
     }
 
-    // Create new conversation
     const newConv = await prisma.conversation.create({
       data: {
         participants: {
@@ -189,7 +201,6 @@ export async function getConversationMessages(
       return;
     }
 
-    // Verify user is participant
     const isParticipant = await prisma.participant.findUnique({
       where: {
         conversationId_userId: {
@@ -200,7 +211,7 @@ export async function getConversationMessages(
     });
 
     if (!isParticipant) {
-      res.status(403).json({ error: 'Access denied: not a conversation participant' });
+      res.status(403).json({ error: 'Forbidden' });
       return;
     }
 
@@ -218,7 +229,12 @@ export async function getConversationMessages(
       orderBy: { createdAt: 'asc' },
     });
 
-    res.status(200).json({ messages });
+    const formattedMessages = messages.map((msg) => ({
+      ...msg,
+      mediaUrl: msg.mediaUrl ? `/api/media/${msg.id}` : null,
+    }));
+
+    res.status(200).json({ messages: formattedMessages });
   } catch (error) {
     console.error('getConversationMessages error:', error);
     res.status(500).json({ error: 'Failed to fetch messages' });

@@ -9,6 +9,7 @@ import {
   setUserStatus,
   setUserTyping,
   removeUserTyping,
+  setActiveConversationId,
 } from '@/store/chatSlice';
 import { chatService } from '@/services/chat.service';
 import type { MessageItem } from '@/types/chat.types';
@@ -24,6 +25,10 @@ export function ChatDashboard() {
       .getConversations()
       .then(({ conversations }) => {
         dispatch(setConversations(conversations));
+        const savedActiveId = localStorage.getItem('chatapp_active_conversation_id');
+        if (savedActiveId && conversations.some((c) => c.id === savedActiveId)) {
+          dispatch(setActiveConversationId(savedActiveId));
+        }
       })
       .catch((err) => console.error('Failed to load conversations:', err));
 
@@ -74,7 +79,7 @@ export function ChatDashboard() {
   }, [dispatch]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-100">
+    <div className="fixed inset-0 flex h-full w-full overflow-hidden bg-zinc-100">
       <div className="flex h-full w-full overflow-hidden bg-white shadow-xs">
         <Sidebar />
         <ChatWindow />

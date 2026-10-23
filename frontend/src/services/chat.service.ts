@@ -18,10 +18,12 @@ export const chatService = {
   },
 
   getMessages: async (
-    conversationId: string
+    conversationId: string,
+    signal?: AbortSignal
   ): Promise<{ messages: MessageItem[] }> => {
     const res = await apiClient.get<{ messages: MessageItem[] }>(
-      `/api/conversations/${conversationId}/messages`
+      `/api/conversations/${conversationId}/messages`,
+      { signal }
     );
     return res.data;
   },
