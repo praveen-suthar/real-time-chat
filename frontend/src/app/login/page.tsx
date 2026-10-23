@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  console.log('[LoginPage render] isAuthenticated:', isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -40,6 +41,7 @@ export default function LoginPage() {
         password,
       });
 
+      console.log('[LoginPage] Login success, dispatching setUser:', user.username);
       dispatch(setUser(user));
       router.replace('/');
     } catch (err: unknown) {
@@ -57,14 +59,6 @@ export default function LoginPage() {
     setUsername(uname);
     setPassword('password123');
   };
-
-  if (isAuthenticated) {
-    return (
-      <main className="flex h-full w-full items-center justify-center p-6 bg-zinc-50">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
-      </main>
-    );
-  }
 
   return (
     <main className="flex h-full w-full overflow-y-auto items-center justify-center p-4 bg-zinc-50">

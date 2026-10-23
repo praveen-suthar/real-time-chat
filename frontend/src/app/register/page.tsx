@@ -67,14 +67,6 @@ export default function RegisterPage() {
     }
   };
 
-  if (isAuthenticated) {
-    return (
-      <main className="flex h-full w-full items-center justify-center p-6 bg-zinc-50">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
-      </main>
-    );
-  }
-
   return (
     <main className="flex h-full w-full overflow-y-auto items-center justify-center p-4 bg-zinc-50">
       <div className="w-full max-w-sm rounded-md border border-zinc-200 bg-white p-6 shadow-xs">

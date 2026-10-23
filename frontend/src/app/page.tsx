@@ -12,8 +12,11 @@ export default function HomePage() {
     (state: RootState) => state.auth
   );
 
+  console.log('[HomePage render] loading:', loading, 'isAuthenticated:', isAuthenticated);
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
+      console.log('[HomePage] Unauthenticated -> navigating to /login');
       router.replace('/login');
     }
   }, [loading, isAuthenticated, router]);
