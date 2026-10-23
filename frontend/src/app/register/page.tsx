@@ -9,14 +9,17 @@ import { setUser } from '@/store/authSlice';
 import { authService } from '@/services/auth.service';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading: authLoading } = useSelector(
+    (state: RootState) => state.auth
+  );
 
   useEffect(() => {
-    if (isAuthenticated) {
-      window.location.replace('/');
+    if (!authLoading && isAuthenticated) {
+      router.replace('/');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading, router]);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -54,7 +57,7 @@ export default function RegisterPage() {
       });
 
       dispatch(setUser(user));
-      window.location.replace('/');
+      router.push('/');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);

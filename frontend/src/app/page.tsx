@@ -1,20 +1,22 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import { ChatDashboard } from '@/components/chat/ChatDashboard';
 
 export default function HomePage() {
+  const router = useRouter();
   const { isAuthenticated, loading } = useSelector(
     (state: RootState) => state.auth
   );
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      window.location.replace('/login');
+      router.replace('/login');
     }
-  }, [loading, isAuthenticated]);
+  }, [loading, isAuthenticated, router]);
 
   if (loading) {
     return (

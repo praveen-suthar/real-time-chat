@@ -13,9 +13,12 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true);
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    // Safety timeout in case backend is slow to respond (e.g., serverless cold start)
     const timer = setTimeout(() => {
       dispatch(clearAuth());
-    }, 3000);
+    }, 6000);
 
     authService
       .getMe()
@@ -25,6 +28,9 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         clearTimeout(timer);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+        }
         dispatch(clearAuth());
       });
 
