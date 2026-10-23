@@ -15,6 +15,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      router.refresh();
       router.replace('/');
     }
   }, [isAuthenticated, router]);
@@ -55,7 +56,6 @@ export default function RegisterPage() {
       });
 
       dispatch(setUser(user));
-      router.replace('/');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);

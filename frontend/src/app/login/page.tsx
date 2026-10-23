@@ -16,6 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      router.refresh();
       router.replace('/');
     }
   }, [isAuthenticated, router]);
@@ -43,7 +44,6 @@ export default function LoginPage() {
 
       console.log('[LoginPage] Login success, dispatching setUser:', user.username);
       dispatch(setUser(user));
-      router.replace('/');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
