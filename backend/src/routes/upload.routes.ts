@@ -5,12 +5,43 @@ import fs from 'fs';
 import { uploadMedia } from '../controllers/upload.controller';
 import { authMiddleware } from '../middlewares/auth';
 
+import os from 'os';
+
 const router = Router();
 
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+function getUploadsDir(): string {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const tmpDir = path.join(os.tmpdir(), 'uploads');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+    } catch {
+      // ignore
+    }
+    return tmpDir;
+  }
+
+  const localDir = path.join(__dirname, '../../uploads');
+  try {
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
+    }
+    return localDir;
+  } catch {
+    const tmpDir = path.join(os.tmpdir(), 'uploads');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+    } catch {
+      // ignore
+    }
+    return tmpDir;
+  }
 }
+
+const uploadsDir = getUploadsDir();
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {

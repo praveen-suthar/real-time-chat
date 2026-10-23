@@ -152,6 +152,14 @@ export async function getMessageMedia(
     }
 
     if (!fs.existsSync(localPath)) {
+      const filename = path.basename(mediaUrl);
+      const tmpPath = path.join(require('os').tmpdir(), 'uploads', filename);
+      if (fs.existsSync(tmpPath)) {
+        localPath = tmpPath;
+      }
+    }
+
+    if (!fs.existsSync(localPath)) {
       res.status(404).json({ error: 'Media file not found on disk' });
       return;
     }
